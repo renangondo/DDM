@@ -1,4 +1,4 @@
-import 'package:projeto_ddm/dtos/aluno_dto.dart';
+import 'package:projeto_ddm/app/aluno_dto.dart';
 
 class AlunoRepository {
   final List<AlunoDto> _alunos = [];

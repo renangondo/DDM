@@ -1,4 +1,4 @@
-import 'package:projeto_ddm/dtos/dto.dart';
+import 'package:projeto_ddm/app/dto.dart';
 import 'package:projeto_ddm/exception/validate_exception.dart';
 import 'package:projeto_ddm/services/string_generator.dart';
 

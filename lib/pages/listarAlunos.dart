@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:projeto_ddm/dtos/aluno_dto.dart';
+import 'package:projeto_ddm/app/aluno_dto.dart';
 import 'package:projeto_ddm/repositorios/alunoRepository.dart';
 import 'package:projeto_ddm/pages/cadastro.dart';
 
