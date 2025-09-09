@@ -1,25 +1,66 @@
 import 'package:flutter/material.dart';
-import 'package:projeto_ddm/app/aluno_dto.dart';
-import 'package:projeto_ddm/repositorios/alunoRepository.dart';
+import 'package:projeto_ddm/app/dominios/entidades/cadastroAluno.dart';
+import 'package:projeto_ddm/app/database/sqlite/dao/cadastroAluno_dao_impl.dart';
 import 'package:projeto_ddm/pages/cadastro.dart';
 
 class ListaAlunosScreen extends StatefulWidget {
-  final AlunoRepository repository;
-
-  const ListaAlunosScreen({required this.repository, Key? key}) : super(key: key);
-
   @override
-  ListaAlunosScreenState createState() => ListaAlunosScreenState();
+  _ListaAlunosScreenState createState() => _ListaAlunosScreenState();
 }
 
-class ListaAlunosScreenState extends State<ListaAlunosScreen> {
+class _ListaAlunosScreenState extends State<ListaAlunosScreen> {
+  // Método para buscar os alunos de forma assíncrona
+  Future<List<Cadastroaluno>> _buscarAlunos() async {
+    return await CadastroalunoDAOImpl().find();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Lista de Alunos'),
       ),
-      body: _buildLista(),
+      body: FutureBuilder<List<Cadastroaluno>>(
+        future: _buscarAlunos(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            return Center(child: Text('Erro: ${snapshot.error}'));
+          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return const Center(child: Text('Nenhum aluno cadastrado'));
+          }
+
+          List<Cadastroaluno> alunos = snapshot.data!;
+
+          return ListView.builder(
+            itemCount: alunos.length,
+            itemBuilder: (context, index) {
+              final aluno = alunos[index];
+              return Card(
+                child: ListTile(
+                  title: Text(aluno.nome),
+                  subtitle: Text(aluno.email),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.edit),
+                        onPressed: () => _abrirTelaCadastro(aluno),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.delete),
+                        onPressed: () => _confirmarRemocao(aluno),
+                      ),
+                    ],
+                  ),
+                  onTap: () => _mostrarDetalhes(aluno),
+                ),
+              );
+            },
+          );
+        },
+      ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _abrirTelaCadastro(null),
         child: const Icon(Icons.add),
@@ -27,49 +68,12 @@ class ListaAlunosScreenState extends State<ListaAlunosScreen> {
     );
   }
 
-  Widget _buildLista() {
-    final alunos = widget.repository.listarTodos();
-    
-    if (alunos.isEmpty) {
-      return const Center(
-        child: Text('Nenhum aluno cadastrado'),
-      );
-    }
-
-    return ListView.builder(
-      itemCount: alunos.length,
-      itemBuilder: (context, index) {
-        final aluno = alunos[index];
-        return Card(
-          child: ListTile(
-            title: Text(aluno.nome),
-            subtitle: Text(aluno.email),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.edit),
-                  onPressed: () => _abrirTelaCadastro(aluno),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.delete),
-                  onPressed: () => _confirmarRemocao(aluno),
-                ),
-              ],
-            ),
-            onTap: () => _mostrarDetalhes(aluno),
-          ),
-        );
-      },
-    );
-  }
-
-  void _abrirTelaCadastro(AlunoDto? aluno) async {
+  // Função para abrir a tela de cadastro de aluno (para edição ou novo)
+  void _abrirTelaCadastro(Cadastroaluno? aluno) async {
     final resultado = await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => Cadastro(
-          repository: widget.repository,
           alunoParaEditar: aluno,
         ),
       ),
@@ -80,7 +84,8 @@ class ListaAlunosScreenState extends State<ListaAlunosScreen> {
     }
   }
 
-  void _mostrarDetalhes(AlunoDto aluno) {
+  // Função para mostrar os detalhes do aluno
+  void _mostrarDetalhes(Cadastroaluno aluno) {
     showDialog(
       context: context,
       builder: (context) {
@@ -106,7 +111,8 @@ class ListaAlunosScreenState extends State<ListaAlunosScreen> {
     );
   }
 
-  void _confirmarRemocao(AlunoDto aluno) {
+  // Função para confirmar a remoção de um aluno
+  void _confirmarRemocao(Cadastroaluno aluno) {
     showDialog(
       context: context,
       builder: (context) {
@@ -120,7 +126,8 @@ class ListaAlunosScreenState extends State<ListaAlunosScreen> {
             ),
             TextButton(
               onPressed: () {
-                widget.repository.remover(aluno.id);
+                // Remover o aluno do banco de dados
+                CadastroalunoDAOImpl().remove(aluno.id);
                 setState(() {});
                 Navigator.pop(context);
               },

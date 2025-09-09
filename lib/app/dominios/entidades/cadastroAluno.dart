@@ -5,7 +5,5 @@ class Cadastroaluno {
   late String telefone;
   late int idade;
 
-  Cadastroaluno(this.nome, this.email, this.telefone, this.idade) {
-      
-  }
+  Cadastroaluno({required this.id,required this.nome,required this.email,required this.telefone,required this.idade});
 }
